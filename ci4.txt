@@ -1,0 +1,42 @@
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import classification_report, accuracy_score
+
+# Generate dataset
+def get_data(n=1000):
+    d = np.random.normal([7.5, 8.0], 1.0, (n//2, 2))
+    nd = np.random.normal([2.0, 2.5], 1.0, (n//2, 2))
+    X = np.vstack((d, nd))
+    y = np.array([1]*(n//2) + [0]*(n//2))
+    return X, y
+
+# Simple AIS Classifier
+class AIS:
+    def __init__(self, detectors=100, thresh=1.5):
+        self.detectors = []
+        self.thresh = thresh
+        self.count = detectors
+
+    def dist(self, a, b): return np.linalg.norm(a - b)
+
+    def train(self, X, y):
+        normal = X[y == 0]
+        while len(self.detectors) < self.count:
+            c = np.random.uniform(0, 10, 2)
+            if all(self.dist(c, n) > self.thresh for n in normal):
+                self.detectors.append(c)
+
+    def predict(self, X):
+        return np.array([1 if any(self.dist(x, d) < self.thresh for d in self.detectors) else 0 for x in X])
+
+# Run
+X, y = get_data()
+X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+model = AIS(detectors=150, thresh=1.8)
+model.train(X_train, y_train)
+pred = model.predict(X_test)
+
+# Output
+print("Predictions:", pred)
+print("\nAccuracy:", accuracy_score(y_test, pred))
+print("\nClassification Report:\n", classification_report(y_test, pred))
